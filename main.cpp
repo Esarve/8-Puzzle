@@ -213,11 +213,14 @@ int main () {
   cin >> choice;
   
   if (choice == 1) {
-    cout << "Enter 9 values for start state (0-8, where 0 is empty): ";
-    for (int i = 0; i < 9; i++) cin >> startState.board[i];
+    string startInput, goalInput;
+    cout << "Enter 9 values for start state (e.g., 123045678): ";
+    cin >> startInput;
+    for (int i = 0; i < 9; i++) startState.board[i] = startInput[i] - '0';
     
-    cout << "Enter 9 values for goal state (0-8, where 0 is empty): ";
-    for (int i = 0; i < 9; i++) cin >> goalState.board[i];
+    cout << "Enter 9 values for goal state (e.g., 123456780): ";
+    cin >> goalInput;
+    for (int i = 0; i < 9; i++) goalState.board[i] = goalInput[i] - '0';
   } else if (choice == 2) {
     generateRandomState(startState);
     generateRandomState(goalState);
