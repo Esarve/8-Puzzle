@@ -8,7 +8,7 @@ using i64 = long long int;
 
 class state {
 public:
-  int board[n][n], g, f;
+  int board[9], g, f;
   state* came_from;
   state () {
     g = 0;
@@ -17,24 +17,22 @@ public:
   }
   static int heuristic (state fromState, state toState) {
     int mismatchCount = 0;
-    for (int i = 0; i < n; i++)
-      for (int j = 0; j < n; j++)
-        if (fromState.board[i][j] != toState.board[i][j])
-          mismatchCount++;
+    for (int i = 0; i < 9; i++)
+      if (fromState.board[i] != toState.board[i])
+        mismatchCount++;
     return mismatchCount;
   }
   bool operator == (state otherState) {
-    for (int i = 0; i < n; i++)
-      for (int j = 0; j < n; j++)
-        if (this->board[i][j] != otherState.board[i][j])
-          return false;
+    for (int i = 0; i < 9; i++)
+      if (this->board[i] != otherState.board[i])
+        return false;
     return true;
   }
   void print () {
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++)
-        cout << board[i][j] << " ";
-      cout << endl;
+    for (int i = 0; i < 9; i++) {
+      cout << board[i] << " ";
+      if ((i + 1) % 3 == 0)
+        cout << endl;
     }
     cout << "g = " << g << " | f = " << f << endl;
   }
@@ -52,9 +50,9 @@ bool containsState (state targetState, vector <state> stateSet) {
   return false;
 }
 
-void addNeighborState (state currentState, state goalState, int newRow, int newCol, int emptyRow, int emptyCol, vector <state>& openSet, vector <state> closedSet) {
+void addNeighborState (state currentState, state goalState, int newPos, int emptyPos, vector <state>& openSet, vector <state> closedSet) {
   state neighborState = currentState;
-  swap (neighborState.board[newRow][newCol], neighborState.board[emptyRow][emptyCol]);
+  swap (neighborState.board[newPos], neighborState.board[emptyPos]);
   if (!containsState(neighborState, closedSet) && !containsState(neighborState, openSet)) {
       neighborState.g = currentState.g + 1;
       neighborState.f = neighborState.g + state :: heuristic(neighborState, goalState);
@@ -66,23 +64,24 @@ void addNeighborState (state currentState, state goalState, int newRow, int newC
 }
 
 void generateNeighbors (state currentState, state goalState, vector <state>& openSet, vector <state>& closedSet) {
-  int i, j, emptyRow ,emptyCol;
-  for (i = 0; i < n; i++)
-    for (j = 0; j < n; j++)
-      if (currentState.board[i][j] == 0) {
-        emptyRow = i;
-        emptyCol = j;
-        break;
-      }
-  i = emptyRow, j = emptyCol;
-  if (i - 1 >= 0)
-    addNeighborState(currentState, goalState, i - 1, j, emptyRow, emptyCol, openSet, closedSet);
-  if (i + 1 < n)
-    addNeighborState(currentState, goalState, i + 1, j, emptyRow, emptyCol, openSet, closedSet);
-  if (j + 1 < n)
-    addNeighborState(currentState, goalState, i, j + 1, emptyRow, emptyCol, openSet, closedSet);
-  if (j - 1 >= 0)
-    addNeighborState(currentState, goalState, i, j - 1, emptyRow, emptyCol, openSet, closedSet);
+  int emptyPos = -1;
+  for (int i = 0; i < 9; i++)
+    if (currentState.board[i] == 0) {
+      emptyPos = i;
+      break;
+    }
+  
+  int row = emptyPos / 3;
+  int col = emptyPos % 3;
+  
+  if (row - 1 >= 0)
+    addNeighborState(currentState, goalState, emptyPos - 3, emptyPos, openSet, closedSet);
+  if (row + 1 < n)
+    addNeighborState(currentState, goalState, emptyPos + 3, emptyPos, openSet, closedSet);
+  if (col + 1 < n)
+    addNeighborState(currentState, goalState, emptyPos + 1, emptyPos, openSet, closedSet);
+  if (col - 1 >= 0)
+    addNeighborState(currentState, goalState, emptyPos - 1, emptyPos, openSet, closedSet);
 }
 
 bool reconstruct_path(state currentState, vector<state> &path) {
@@ -115,13 +114,17 @@ bool astar (state startState, state goalState) {
 
 int main () {
   state startState, goalState;
-  freopen("in.txt", "r", stdin);
-  for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) cin >> startState.board[i][j];
-  for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) cin >> goalState.board[i][j];
+  
+  int start[9] = {1, 2, 3, 4, 0, 5, 6, 7, 8};
+  for (int i = 0; i < 9; i++) startState.board[i] = start[i];
+  
+  int goal[9] = {1, 2, 3, 4, 5, 6, 7, 8, 0};
+  for (int i = 0; i < 9; i++) goalState.board[i] = goal[i];
+  
   if (astar(startState, goalState) == SUCCESS) {
     for (int i = solutionPath.size() - 1; i >= 0; i--)
       solutionPath[i].print();
-    cout << "SUCKsess" << endl;
+    cout << "Success" << endl;
   }
   else cout << "FAIL" << endl;
   return 0;
