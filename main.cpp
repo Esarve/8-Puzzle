@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
+#include <ctime>
 #define n 3
 const bool SUCCESS = true;
 using namespace std;
@@ -9,12 +11,15 @@ using i64 = long long int;
 class state {
 public:
   int board[9], g, f;
+
   state* came_from;
+
   state () {
     g = 0;
     f = 0;
     came_from = NULL;
   }
+
   static int heuristic (state fromState, state toState) {
     int mismatchCount = 0;
     for (int i = 0; i < 9; i++)
@@ -22,12 +27,14 @@ public:
         mismatchCount++;
     return mismatchCount;
   }
+
   bool operator == (state otherState) {
     for (int i = 0; i < 9; i++)
       if (this->board[i] != otherState.board[i])
         return false;
     return true;
   }
+
   void print () {
     for (int i = 0; i < 9; i++) {
       cout << board[i] << " ";
@@ -112,14 +119,57 @@ bool astar (state startState, state goalState) {
   return !SUCCESS;
 }
 
+void generateRandomState(state& s) {
+  vector<int> tiles = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+  for (int i = 8; i > 0; i--) {
+    int j = rand() % (i + 1);
+    swap(tiles[i], tiles[j]);
+  }
+  for (int i = 0; i < 9; i++)
+    s.board[i] = tiles[i];
+}
+
 int main () {
+  srand(time(0));
   state startState, goalState;
   
-  int start[9] = {1, 2, 3, 4, 0, 5, 6, 7, 8};
-  for (int i = 0; i < 9; i++) startState.board[i] = start[i];
+  cout << "Choose input method:" << endl;
+  cout << "1. Manual input" << endl;
+  cout << "2. Random generation" << endl;
+  cout << "3. Use default state" << endl;
+  cout << "Enter choice (1, 2, or 3): ";
   
-  int goal[9] = {1, 2, 3, 4, 5, 6, 7, 8, 0};
-  for (int i = 0; i < 9; i++) goalState.board[i] = goal[i];
+  int choice;
+  cin >> choice;
+  
+  if (choice == 1) {
+    cout << "Enter 9 values for start state (0-8, where 0 is empty): ";
+    for (int i = 0; i < 9; i++) cin >> startState.board[i];
+    
+    cout << "Enter 9 values for goal state (0-8, where 0 is empty): ";
+    for (int i = 0; i < 9; i++) cin >> goalState.board[i];
+  } else if (choice == 2) {
+    generateRandomState(startState);
+    generateRandomState(goalState);
+    
+    cout << "\nGenerated Start State:" << endl;
+    startState.print();
+    cout << "\nGenerated Goal State:" << endl;
+    goalState.print();
+    cout << endl;
+  } else {
+    int start[9] = {1, 2, 3, 4, 0, 5, 6, 7, 8};
+    for (int i = 0; i < 9; i++) startState.board[i] = start[i];
+    
+    int goal[9] = {1, 2, 3, 4, 5, 6, 7, 8, 0};
+    for (int i = 0; i < 9; i++) goalState.board[i] = goal[i];
+    
+    cout << "\nDefault Start State:" << endl;
+    startState.print();
+    cout << "\nDefault Goal State:" << endl;
+    goalState.print();
+    cout << endl;
+  }
   
   if (astar(startState, goalState) == SUCCESS) {
     for (int i = solutionPath.size() - 1; i >= 0; i--)
