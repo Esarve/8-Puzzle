@@ -259,7 +259,8 @@ int main () {
     cout << "========================================" << endl;
     
     if (astar(startState, goalState, heuristic) == SUCCESS) {
-      cout << "Path length: " << solutionPath.size() << " steps\n" << endl;
+      int steps = solutionPath.size() - 1;
+      cout << "Total steps to reach goal: " << steps << "\n" << endl;
       for (int i = solutionPath.size() - 1; i >= 0; i--)
         solutionPath[i].print();
       cout << "Success\n" << endl;
