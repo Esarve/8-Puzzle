@@ -1,3 +1,19 @@
+/**
+ * Base Code = https://github.com/i-64/8-Puzzle
+ * Modified for AMOD 5470H - Assignment 1 - 8-Puzzle Problem
+ * By: Sourav Das, Student ID: 0884762
+ *
+ * Acknowledgment: I have referred to the original code for structure and logic,
+ * but I have rewritten and commented the code extensively to ensure it is my own work and to enhance readability.
+ * 
+ * The core A* algorithm and heuristic function are implemented based on the submitted Assignment Doc for solving the 8-puzzle problem.
+ * There was usage of Grammarly for grammar and spelling checks, but all code logic and comments are my own.
+ *
+ * Admissible Heuristic Used: Diagonal Distance, Manhattan Distance, Misplaced Tiles
+ *
+ * Inadmissible Heuristic Used: Combined Distance (Manhattan + Diagonal)
+ */
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -130,7 +146,8 @@ bool reconstruct_path(state currentState, vector<state> &path) {
     return SUCCESS;
 }
 
-bool astar (state startState, state goalState, function<int(state, state)> heuristic, int& statesExplored) {
+bool astar (state startState, state goalState, function<int(state, state)> heuristic, 
+           int& statesExplored, size_t& maxOpenSize, size_t& closedSize) {
   priority_queue<state, vector<state>, CompareState> openSet;
   unordered_set<state> closedSet;
   state currentState;
@@ -138,7 +155,14 @@ bool astar (state startState, state goalState, function<int(state, state)> heuri
   startState.f = startState.g + heuristic(startState, goalState);
   openSet.push(startState);
   statesExplored = 0;
+  maxOpenSize = 0;
+  
   while (!openSet.empty()) {
+    // Track max open set size
+    if (openSet.size() > maxOpenSize) {
+      maxOpenSize = openSet.size();
+    }
+    
     currentState = openSet.top();
     openSet.pop();
     
@@ -149,12 +173,16 @@ bool astar (state startState, state goalState, function<int(state, state)> heuri
     
     statesExplored++;
     
-    if (currentState == goalState)
+    if (currentState == goalState) {
+      closedSize = closedSet.size();
       return reconstruct_path(currentState, solutionPath);
+    }
     
     closedSet.insert(currentState);
     generateNeighbors(currentState, goalState, openSet, closedSet, heuristic);
   }
+  
+  closedSize = closedSet.size();
   return !SUCCESS;
 }
 
@@ -307,15 +335,22 @@ int main () {
     cout << "Initial h(n) = " << initial_h << endl << endl;
     
     int statesExplored = 0;
+    size_t maxOpenSize = 0, closedSize = 0;
     auto startTime = chrono::high_resolution_clock::now();
     
-    if (astar(startState, goalState, heuristic, statesExplored) == SUCCESS) {
+    if (astar(startState, goalState, heuristic, statesExplored, maxOpenSize, closedSize) == SUCCESS) {
       auto endTime = chrono::high_resolution_clock::now();
       auto duration = chrono::duration_cast<chrono::microseconds>(endTime - startTime);
       
       int steps = solutionPath.size() - 1;
+      size_t totalStates = maxOpenSize + closedSize;
+      size_t estimatedMemoryKB = (totalStates * sizeof(state)) / 1024;
+      
       cout << "Total steps to reach goal: " << steps << endl;
-      // cout << "States explored: " << statesExplored << endl;
+      cout << "States explored: " << statesExplored << endl;
+      cout << "Max open set size: " << maxOpenSize << endl;
+      cout << "Closed set size: " << closedSize << endl;
+      cout << "Estimated memory: " << estimatedMemoryKB << " KB (" << totalStates << " states)" << endl;
       cout << "Time taken: " << fixed << setprecision(3) << duration.count() / 1000.0 << " ms\n" << endl;
       
       // for (int i = solutionPath.size() - 1; i >= 0; i--)
