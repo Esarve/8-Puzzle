@@ -5,6 +5,7 @@
 #include <ctime>
 #include <functional>
 #include <cmath>
+#include <set>
 #define n 3
 const bool SUCCESS = true;
 using namespace std;
@@ -22,11 +23,19 @@ public:
     came_from = NULL;
   }
 
-  bool operator == (state otherState) {
+  bool operator == (state otherState) const {
     for (int i = 0; i < 9; i++)
       if (this->board[i] != otherState.board[i])
         return false;
     return true;
+  }
+
+  bool operator < (const state& other) const {
+    for (int i = 0; i < 9; i++) {
+      if (this->board[i] < other.board[i]) return true;
+      if (this->board[i] > other.board[i]) return false;
+    }
+    return false;
   }
 
   void print () {
@@ -44,27 +53,39 @@ bool compareFScore (state stateA, state stateB) {
   return stateA.f < stateB.f;
 }
 
-bool containsState (state targetState, vector <state> stateSet) {
-  for (int i = 0; i < stateSet.size(); i++)
-    if (targetState == stateSet[i])
-      return true;
-  return false;
-}
-
-void addNeighborState (state currentState, state goalState, int newPos, int emptyPos, vector <state>& openSet, vector <state> closedSet, function<int(state, state)> heuristic) {
+void addNeighborState (state currentState, state goalState, int newPos, int emptyPos, vector <state>& openSet, set<state>& closedSet, function<int(state, state)> heuristic) {
   state neighborState = currentState;
   swap (neighborState.board[newPos], neighborState.board[emptyPos]);
-  if (!containsState(neighborState, closedSet) && !containsState(neighborState, openSet)) {
-      neighborState.g = currentState.g + 1;
-      neighborState.f = neighborState.g + heuristic(neighborState, goalState);
-      state* parentState = new state();
-      *parentState = currentState;
-      neighborState.came_from = parentState;
-      openSet.push_back(neighborState);
+  
+  // Skip if already in closed set
+  if (closedSet.find(neighborState) != closedSet.end()) {
+    return;
+  }
+  
+  // Check if already in open set
+  bool inOpenSet = false;
+  for (auto& s : openSet) {
+    if (s == neighborState) {
+      inOpenSet = true;
+      // If found with worse g-score, skip
+      if (currentState.g + 1 >= s.g) {
+        return;
+      }
+      break;
+    }
+  }
+  
+  if (!inOpenSet) {
+    neighborState.g = currentState.g + 1;
+    neighborState.f = neighborState.g + heuristic(neighborState, goalState);
+    state* parentState = new state();
+    *parentState = currentState;
+    neighborState.came_from = parentState;
+    openSet.push_back(neighborState);
   }
 }
 
-void generateNeighbors (state currentState, state goalState, vector <state>& openSet, vector <state>& closedSet, function<int(state, state)> heuristic) {
+void generateNeighbors (state currentState, state goalState, vector <state>& openSet, set<state>& closedSet, function<int(state, state)> heuristic) {
   int emptyPos = -1;
   for (int i = 0; i < 9; i++)
     if (currentState.board[i] == 0) {
@@ -96,18 +117,26 @@ bool reconstruct_path(state currentState, vector<state> &path) {
 
 bool astar (state startState, state goalState, function<int(state, state)> heuristic) {
   vector <state> openSet;
-  vector <state> closedSet;
+  set <state> closedSet;
   state currentState;
   startState.g = 0;
   startState.f = startState.g + heuristic(startState, goalState);
   openSet.push_back(startState);
+  int iterations = 0;
   while (!openSet.empty()) {
     sort(openSet.begin(), openSet.end(), compareFScore);
     currentState = openSet[0];
+    
+    // Progress indicator
+    iterations++;
+    if (iterations % 1000 == 0) {
+      cout << "Explored " << iterations << " states, Open: " << openSet.size() << ", Closed: " << closedSet.size() << endl;
+    }
+    
     if (currentState == goalState)
       return reconstruct_path(currentState, solutionPath);
     openSet.erase(openSet.begin());
-    closedSet.push_back(currentState);
+    closedSet.insert(currentState);
     generateNeighbors(currentState, goalState, openSet, closedSet, heuristic);
   }
   return !SUCCESS;
