@@ -279,8 +279,7 @@ int main () {
   cout << "Choose input method:" << endl;
   cout << "1. Manual input" << endl;
   cout << "2. Random generation" << endl;
-  cout << "3. Use default state" << endl;
-  cout << "Enter choice (1, 2, or 3): ";
+  cout << "Enter choice (1 or 2): ";
   
   int choice;
   cin >> choice;
@@ -294,27 +293,33 @@ int main () {
     cout << "Enter 9 values for goal state (e.g., 123456780): ";
     cin >> goalInput;
     for (int i = 0; i < 9; i++) goalState.board[i] = goalInput[i] - '0';
-  } else if (choice == 2) {
-    generateRandomState(startState);
-    generateRandomState(goalState);
-    
-    cout << "\nGenerated Start State:" << endl;
-    startState.print();
-    cout << "\nGenerated Goal State:" << endl;
-    goalState.print();
-    cout << endl;
   } else {
-    int start[9] = {1, 2, 3, 4, 0, 5, 6, 7, 8};
-    for (int i = 0; i < 9; i++) startState.board[i] = start[i];
+    // Keep generating until we get a solvable puzzle
+    bool foundSolvable = false;
+    int attempts = 0;
     
-    int goal[9] = {1, 2, 3, 4, 5, 6, 7, 8, 0};
-    for (int i = 0; i < 9; i++) goalState.board[i] = goal[i];
-    
-    cout << "\nDefault Start State:" << endl;
-    startState.print();
-    cout << "\nDefault Goal State:" << endl;
-    goalState.print();
-    cout << endl;
+    while (!foundSolvable) {
+      attempts++;
+      generateRandomState(startState);
+      generateRandomState(goalState);
+      
+      cout << "\n[Attempt " << attempts << "]" << endl;
+      cout << "Generated Start State:" << endl;
+      startState.print();
+      cout << "\nGenerated Goal State:" << endl;
+      goalState.print();
+      cout << endl;
+      
+      // Quick test with Manhattan distance to check if solvable
+      int statesExplored = 0;
+      size_t maxOpenSize = 0, closedSize = 0;
+      if (astar(startState, goalState, manhattanDistance, statesExplored, maxOpenSize, closedSize) == SUCCESS) {
+        foundSolvable = true;
+        cout << "Found solvable puzzle\n" << endl;
+      } else {
+        cout << "Not solvable, generating new puzzle...\n" << endl;
+      }
+    }
   }
   
   // Run with all heuristics
