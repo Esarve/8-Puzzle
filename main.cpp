@@ -89,7 +89,9 @@ void addNeighborState (state currentState, state goalState, int newPos, int empt
   }
   
   neighborState.g = currentState.g + 1;
-  neighborState.f = neighborState.g + heuristic(neighborState, goalState);
+  int h_value = heuristic(neighborState, goalState);
+  neighborState.f = neighborState.g + h_value;
+  
   state* parentState = new state();
   *parentState = currentState;
   neighborState.came_from = parentState;
@@ -300,6 +302,9 @@ int main () {
     cout << "========================================" << endl;
     cout << "Running with " << name << " heuristic" << endl;
     cout << "========================================" << endl;
+    
+    int initial_h = heuristic(startState, goalState);
+    cout << "Initial h(n) = " << initial_h << endl << endl;
     
     int statesExplored = 0;
     auto startTime = chrono::high_resolution_clock::now();
