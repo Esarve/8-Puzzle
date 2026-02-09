@@ -31,6 +31,7 @@ const bool SUCCESS = true;
 using namespace std;
 using i64 = long long int;
 
+// this is the board state representation for the 8-puzzle problem
 class state {
 public:
   int board[9], g, f;
@@ -76,6 +77,7 @@ public:
   }
 };
 
+// template for lamba
 namespace std {
   template<>
   struct hash<state> {
@@ -87,12 +89,16 @@ namespace std {
 
 vector <state> solutionPath;
 
+// does exactly what it says
 struct CompareState {
   bool operator()(const state& a, const state& b) const {
     return a.f > b.f; // Min-heap based on f score
   }
 };
 
+// creates a new neighbor state by swapping tiles and adds it to the open set
+// skips if we've already explored this state before
+// calculates the cost and heuristic for this new state
 void addNeighborState (state currentState, state goalState, int newPos, int emptyPos, 
                       priority_queue<state, vector<state>, CompareState>& openSet, 
                       unordered_set<state>& closedSet, function<int(state, state)> heuristic) {
@@ -114,6 +120,9 @@ void addNeighborState (state currentState, state goalState, int newPos, int empt
   openSet.push(neighborState);
 }
 
+// generates all possible moves from the current state
+// finds where the empty tile is and tries moving it up, down, left, right
+// only generates valid moves that stay within the board boundaries
 void generateNeighbors (state currentState, state goalState, 
                        priority_queue<state, vector<state>, CompareState>& openSet, 
                        unordered_set<state>& closedSet, function<int(state, state)> heuristic) {
@@ -137,6 +146,8 @@ void generateNeighbors (state currentState, state goalState,
     addNeighborState(currentState, goalState, emptyPos - 1, emptyPos, openSet, closedSet, heuristic);
 }
 
+// backtracks from the goal state to the start state to build the solution path
+// follows the came_from pointers to reconstruct how we got to the goal
 bool reconstruct_path(state currentState, vector<state> &path) {
     state *statePtr = &currentState;
     while(statePtr != NULL) {
@@ -146,6 +157,10 @@ bool reconstruct_path(state currentState, vector<state> &path) {
     return SUCCESS;
 }
 
+// main a-star search algorithm that finds the shortest path from start to goal
+// uses a priority queue to always explore the most promising state first
+// keeps track of visited states to avoid going in circles
+// returns true if solution found, false if no solution exists
 bool astar (state startState, state goalState, function<int(state, state)> heuristic, 
            int& statesExplored, size_t& maxOpenSize, size_t& closedSize) {
   priority_queue<state, vector<state>, CompareState> openSet;
@@ -186,6 +201,8 @@ bool astar (state startState, state goalState, function<int(state, state)> heuri
   return !SUCCESS;
 }
 
+// creates a random puzzle state by shuffling the tiles
+// uses fisher-yates shuffle to randomize the board
 void generateRandomState(state& s) {
   vector<int> tiles = {0, 1, 2, 3, 4, 5, 6, 7, 8};
   for (int i = 8; i > 0; i--) {
